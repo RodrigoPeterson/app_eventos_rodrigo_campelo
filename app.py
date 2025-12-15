@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 
 from datetime import datetime
@@ -37,9 +37,41 @@ def index():
     eventos = Evento.query.order_by(Evento.data).all()
     return render_template("index.html", eventos=eventos)
 
-@app.route("/cadastrar-evento")
-def cadastrar_eventos():
+@app.route("/cadastrar-evento", methods=["GET","POST"])
+def cadastrar_evento():
+    if request.method == 'POST':
+        nome = request.form.get('evento')
+        idade = request.form.get('idade')
+        data_str = request.form.get('data')
+        hora_str = request.form.get('hora')
+        cep = request.form.get('cep')
+        uf = request.form.get('uf')
+        cidade = request.form.get('cidade')
+        local = request.form.get('local')
+
+        idade_val = int(idade) if idade else None
+        data_val = datetime.strptime(data_str, "%Y-%m-%d").date() if data_str else None
+        hora_val = datetime.strptime(hora_str, "%H:%M").time() if hora_str else None
+
+        evento = Evento(
+            nome=nome,
+            idade_minima=idade_val,
+            data=data_val,
+            hora=hora_val,
+            cep=cep,
+            uf=uf,
+            cidade=cidade,
+            local=local
+
+        )
+
+        db.session.add(evento)
+        db.session.commit()
+        flash('Evento cadastrado com sucesso.')
+        return redirect(url_for('index'))
+    
     return render_template("cadastrar-evento.html")
 
 if __name__ == "__main__":
+    create_tables()
     app.run(debug=True)
